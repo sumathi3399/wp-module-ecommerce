@@ -376,8 +376,12 @@ describe('As a wp-admin user, I want to ', function () {
     cy.get('button.nfd-ecommerce-card').contains('Add a Product').click();
 
     // FIXME: This is not actual behaviour
-    cy.findByText('Add manually').click();
-    cy.get('[name=post_title]').type(this.data.simple_product_details.name);
+    cy.findByText('Physical product', {
+      timeout: customCommandTimeout,
+    }).click();
+    cy.get('[name=post_title]', { timeout: customCommandTimeout }).type(
+      this.data.simple_product_details.name
+    );
     cy.get('body').then(($body) => {
       if ($body.find('[aria-label="Close Tour"]').length !== 0) {
         cy.get('[aria-label="Close Tour"]').click();
@@ -461,7 +465,9 @@ describe('As a wp-admin user, I want to ', function () {
     cy.contains('Products and Services', {
       timeout: customCommandTimeout,
     }).click();
-    cy.get('button.nfd-ecommerce-card').contains('Import Products').click();
+    cy.get('button.nfd-ecommerce-card', { timeout: customCommandTimeout })
+      .contains('Import Products')
+      .click();
     cy.get('[name=import]').selectFile(
       './tests/cypress/fixtures/WCProductList.csv'
     );
@@ -493,8 +499,12 @@ describe('As a wp-admin user, I want to ', function () {
     cy.contains('Products and Services', {
       timeout: customCommandTimeout,
     }).click();
-    cy.get('.nfd-ecommerce-card').contains('Gift').should('exist');
-    cy.get('.nfd-ecommerce-card').contains('Booking').should('exist');
+    cy.get('.nfd-ecommerce-card', { timeout: customCommandTimeout })
+      .contains('Gift')
+      .should('exist');
+    cy.get('.nfd-ecommerce-card', { timeout: customCommandTimeout })
+      .contains('Booking')
+      .should('exist');
   });
 
   it('verify Gift & Booking card is not visible when plugin is not installed', () => {
@@ -517,12 +527,78 @@ describe('As a wp-admin user, I want to ', function () {
     cy.contains('Products and Services', {
       timeout: customCommandTimeout,
     }).click();
-    cy.get('.nfd-ecommerce-card').contains('Gift').should('not.exist');
-    cy.get('.nfd-ecommerce-card').contains('Booking').should('not.exist');
+    cy.get('.nfd-ecommerce-card', { timeout: customCommandTimeout })
+      .contains('Gift')
+      .should('not.exist');
+    cy.get('.nfd-ecommerce-card', { timeout: customCommandTimeout })
+      .contains('Booking')
+      .should('not.exist');
   });
 
-  // TODO: Execute and test when this feature implemented
-  it.skip('create , edit, and manage gift card', () => {});
+  it('create , edit, and manage gift card', () => {
+    cy.contains('Products and Services').click();
+    cy.get('.nfd-ecommerce-card-title', { timeout: customCommandTimeout })
+      .contains('Create a Gift Card')
+      .click();
+    cy.get('[name=post_title]', { timeout: customCommandTimeout })
+      .clear()
+      .type('Birthday Card');
+    cy.get('select#product-type option:selected').should(
+      'have.text',
+      'Gift card'
+    );
+    cy.visit('/wp-admin/admin.php?page=bluehost#/home/store/products');
+    cy.get('.nfd-ecommerce-card-title', { timeout: customCommandTimeout })
+      .contains('Manage Gift Cards')
+      .click();
+    cy.get('button[role="menuitem"]', { timeout: customCommandTimeout })
+      .as('menu')
+      .should('have.length', 3);
+
+    let menuList = [
+      'Create a gift card',
+      'View/Edit a gift card',
+      'Manage gift card settings',
+    ];
+
+    cy.get('@menu').eq(0).scrollIntoView();
+    cy.get('@menu').each(($el, index, $list) => {
+      cy.wrap($el).should('have.text', menuList[index]);
+    });
+
+    cy.get('@menu').eq(0).scrollIntoView();
+    cy.get('@menu')
+      .findByText('Create a gift card')
+      .click({ waitForAnimations: false });
+    cy.get('select#product-type option:selected').should(
+      'have.text',
+      'Gift card'
+    );
+    cy.go('back');
+
+    cy.get('.nfd-ecommerce-card-title', { timeout: customCommandTimeout })
+      .contains('Manage Gift Cards')
+      .click();
+
+    cy.get('@menu').eq(0).scrollIntoView();
+    cy.get('@menu')
+      .contains('View/Edit a gift card')
+      .click({ waitForAnimations: false });
+    cy.url().should(
+      'eq',
+      Cypress.config().baseUrl + '/wp-admin/edit.php?post_type=product'
+    );
+    cy.go('back');
+
+    cy.get('.nfd-ecommerce-card-title', { timeout: customCommandTimeout })
+      .contains('Manage Gift Cards')
+      .click();
+    cy.get('@menu').eq(0).scrollIntoView();
+    cy.get('@menu')
+      .contains('Manage gift card settings')
+      .click({ waitForAnimations: false });
+    cy.url().should('include', 'edit.php?post_type=gift_card&yith-plugin');
+  });
 
   // TODO: Execute and test when this feature implemented
   it.skip('create , edit, and manage booking card', () => {});
@@ -566,7 +642,7 @@ describe('As a wp-admin user, I want to ', function () {
     });
   });
 
-  it('create home page, about page, contcat page', () => {
+  it('create home page, about page, contact page', () => {
     cy.get('a > li').contains('Pages').click();
     cy.log('Create HomePage');
     cy.contains('Home Page').click();
@@ -667,16 +743,18 @@ describe('As a wp-admin user, I want to ', function () {
     cy.enableComingSoon();
     cy.reload();
 
-    cy.get('div.site-status-banner').then(($element) => {
-      cy.wrap($element.find('h2').text()).should('eq', 'Ready to go live?');
-      cy.wrap($element.find('p').text()).should(
-        'eq',
-        "Preview your store before setting it live to make sure everything is how you want it. Once you're ready, set your store live!"
-      );
+    cy.get('div.site-status-banner', { timeout: customCommandTimeout }).then(
+      ($element) => {
+        cy.wrap($element.find('h2').text()).should('eq', 'Ready to go live?');
+        cy.wrap($element.find('p').text()).should(
+          'eq',
+          "Preview your store before setting it live to make sure everything is how you want it. Once you're ready, set your store live!"
+        );
 
-      cy.contains('Launch your store').click();
-      cy.contains('Continue').click();
-    });
+        cy.contains('Launch your store').click();
+        cy.contains('Continue').click();
+      }
+    );
 
     cy.get('.nfd-ecommerce-store-analytics').as('analytics');
     cy.get('@analytics').find('h2').should('have.text', 'Store Analytics');
