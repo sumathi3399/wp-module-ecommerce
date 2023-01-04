@@ -547,6 +547,7 @@ describe('As a wp-admin user, I want to ', function () {
       'have.text',
       'Gift card'
     );
+    cy.get('input#publish').click();
     cy.visit('/wp-admin/admin.php?page=bluehost#/home/store/products');
     cy.get('.nfd-ecommerce-card-title', { timeout: customCommandTimeout })
       .contains('Manage Gift Cards')
@@ -601,7 +602,24 @@ describe('As a wp-admin user, I want to ', function () {
   });
 
   // TODO: Execute and test when this feature implemented
-  it.skip('create , edit, and manage booking card', () => {});
+  it('create , edit, and manage booking card', () => {
+    cy.contains('Products and Services').click();
+    cy.get('.nfd-ecommerce-card-title', { timeout: customCommandTimeout })
+      .contains('Setup Bookings')
+      .click();
+    cy.get('[name=post_title]', { timeout: customCommandTimeout })
+      .clear()
+      .type('My Booking');
+    cy.get('select#product-type').select('Bookable Product');
+    cy.get('input#publish').click();
+    cy.visit('/wp-admin/admin.php?page=bluehost#/home/store/products');
+    cy.get('.nfd-ecommerce-card-title', { timeout: customCommandTimeout })
+      .contains('Manage Bookings')
+      .click();
+    cy.findByText('YITH Booking and Appointment for WooCommerce').should(
+      'exist'
+    );
+  });
 
   it("verify 'How to add product' card exist", () => {
     const urlToVerify = 'https://woocommerce.com/document/managing-products/';

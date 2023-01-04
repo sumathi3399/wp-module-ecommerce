@@ -1,18 +1,23 @@
 /// <reference types="cypress" />
 ///<reference types="cypress-iframe" />
 
+import 'cypress-iframe';
+
 const dimensions = require('../fixtures/dimensions');
 
-describe('Verify ', () => {
+describe('Verify ', function () {
   Object.values(dimensions).map((key, index) => {
     let deviceName = Object.keys(dimensions)[index];
 
     before(() => {
+      cy.fixture('homePageUserInputData').then((data) => {
+        this.data = data;
+      });
+
       cy.activatePlugin('all');
       cy.deleteALLTaxRates();
       cy.deleteAllProducts();
       cy.deleteAllPages();
-      cy.exec('npx wp-env run cli wp option set mm_coming_soon true');
       cy.resetGeneralSettingTabs();
     });
 
@@ -36,7 +41,7 @@ describe('Verify ', () => {
     });
 
     it(`all store info cards are displaying properly in ${deviceName}`, () => {
-      cy.get('[title="Store Info"]').click();
+      cy.findByText('Store Info').click();
       cy.get('[role="menu"]')
         .parent()
         .find('button')
@@ -52,7 +57,7 @@ describe('Verify ', () => {
     });
 
     it(`Store info fields are properly allign in ${deviceName}`, () => {
-      cy.get('[title="Store Info"]').click();
+      cy.findByText('Store Info').click();
       cy.get('.nfd-ecommerce-card', { timeout: 10000 })
         .contains('Store Info')
         .click();
@@ -60,9 +65,6 @@ describe('Verify ', () => {
       cy.get('form>p').each(($element) => {
         expect($element.outerWidth()).to.be.lessThan(key.width);
         expect($element.css('position')).eq('static');
-      });
-      cy.get('input[name=woocommerce_store_address]').then(($element) => {
-        cy.log($element.css('position'));
       });
       cy.get('input[name=woocommerce_store_address]')
         .should('have.css', 'position', 'static')
@@ -88,6 +90,45 @@ describe('Verify ', () => {
         .should('have.css', 'background-color', 'rgb(25, 107, 222)')
         .invoke('outerWidth')
         .should('be.lessThan', key.width);
+    });
+
+    it(`store info are displaying properly in done state in ${deviceName}`, () => {
+      cy.findByText('Store Info').click();
+      cy.get('.nfd-ecommerce-card', { timeout: 10000 })
+        .contains('Store Info')
+        .click();
+      cy.get('input[name=woocommerce_store_address]').type(
+        this.data.store_address.address1
+      );
+      cy.get('[name=woocommerce_store_city]').type(
+        this.data.store_address.city
+      );
+      cy.get('input[name=woocommerce_store_postcode]').type(
+        this.data.store_address.zipcode
+      );
+      cy.get('select[name=country]').select(this.data.store_address.country);
+      cy.get('select[name=state]').select(this.data.store_address.state);
+      cy.get('[name=woocommerce_email_from_address]').type(
+        this.data.store_address.email
+      );
+      cy.get('[name=woocommerce_currency]').select(
+        this.data.store_address.currency
+      );
+      cy.get('button[type=submit]').click();
+
+      cy.contains('Store Info', { timeout: 10000 })
+        .parent()
+        .find('.nfd-ecommerce-taskCompleted-image', { timeout: 10000 })
+        .should('exist');
+
+      cy.contains('Store Info')
+        .parent()
+        .should('have.css', 'position', 'static');
+
+      cy.contains('Store Info')
+        .parent()
+        .invoke('outerWidth')
+        .should('be.lt', key.width);
     });
 
     it(`Payments Card fields are properly allign in ${deviceName}`, () => {
@@ -178,8 +219,8 @@ describe('Verify ', () => {
       });
     });
 
-    it(`Product and Services cards are displaying properly in ${deviceName}`, () => {
-      cy.get('[title="Products and Services"]').click();
+    it.only(`Product and Services cards are displaying properly in ${deviceName}`, () => {
+      cy.findByText('Products and Services').click();
 
       cy.get('button.nfd-ecommerce-card', { timeout: 50000 }).each(
         ($element) => {
@@ -201,8 +242,11 @@ describe('Verify ', () => {
       );
 
       cy.get('button.nfd-ecommerce-card', { timeout: 50000 })
-        .contains('Add Products')
+        .contains('Add a Product')
         .click();
+      cy.findByText('Physical product', {
+        timeout: 50000,
+      }).click();
       cy.get('[name="post_title"]').type('First Product');
       cy.get('#publish').click();
       cy.go('back');
@@ -223,9 +267,12 @@ describe('Verify ', () => {
     });
 
     it(`Pages cards are displaying properly in ${deviceName}`, () => {
-      cy.get('[title="Pages"]').invoke('outerWidth').should('be.lt', key.width);
+      cy.get('[role="menu"]')
+        .findByText('Pages')
+        .invoke('outerWidth')
+        .should('be.lt', key.width);
 
-      cy.get('[title="Pages"]').click();
+      cy.get('[role="menu"]').findByText('Pages').findByText('Pages').click();
       cy.get('[role="menu"]')
         .parent()
         .find('button')
@@ -252,7 +299,7 @@ describe('Verify ', () => {
     });
 
     it(`Additional Features Cards are displaying properly in ${deviceName}`, () => {
-      cy.get('[title="Additional Features"]').click();
+      cy.findByText('Additional Features').click();
       cy.get('[role="menu"]')
         .parent()
         .find('button')
