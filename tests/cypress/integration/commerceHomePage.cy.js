@@ -2,14 +2,15 @@
 ///<reference types="cypress-iframe" />
 
 import 'cypress-iframe';
+
 const customCommandTimeout = 10000;
+var homeUrl = '/wp-admin/admin.php?page=bluehost#/home/store/general';
 
 describe('As a wp-admin user, I want to ', function () {
   before(() => {
     cy.fixture('homePageUserInputData').then((data) => {
       this.data = data;
     });
-
     cy.activatePlugin('all');
     cy.deleteALLTaxRates();
     cy.deleteAllProducts();
@@ -18,7 +19,7 @@ describe('As a wp-admin user, I want to ', function () {
   });
 
   beforeEach(() => {
-    cy.visit('/wp-admin/admin.php?page=bluehost#/home/store/general');
+    cy.visit(homeUrl);
     cy.injectAxe();
     cy.contains('Tax Info', { timeout: 30000 });
   });
@@ -33,9 +34,15 @@ describe('As a wp-admin user, I want to ', function () {
       'WooCommerce is required for this dashboard to work, install it now or contact our support team for more assistance.'
     ).should('exist');
     cy.contains('Install WooCommerce').should('exist');
-    cy.contains('Contact Support')
-      .should('exist')
-      .and('have.attr', 'href', 'https://www.bluehost.com/contact');
+    cy.contains('Contact Support').should('exist');
+    const urlToVerify = 'https://www.bluehost.com/contact';
+    cy.window().then((win) => {
+      cy.stub(win, 'open')
+        .as('windowOpen')
+        .callsFake(() => {});
+    });
+    cy.contains('Contact Support').click();
+    cy.get('@windowOpen').should('be.calledWith', urlToVerify, '_blank');
     cy.activatePlugin('woocommerce');
   });
 
@@ -122,13 +129,14 @@ describe('As a wp-admin user, I want to ', function () {
     );
     cy.get('button[type=submit]').click();
 
-    cy.get('button.nfd-ecommerce-taskCompleted', {
+    cy.get('.task-status-indicator', {
       timeout: customCommandTimeout,
     }).should('be.visible');
     cy.reload();
-    cy.get('button.nfd-ecommerce-taskCompleted', {
+    cy.get('.task-status-indicator', {
       timeout: customCommandTimeout,
     })
+      .parent()
       .find('.nfd-ecommerce-card-title')
       .contains('Store Info')
       .click();
@@ -254,9 +262,10 @@ describe('As a wp-admin user, I want to ', function () {
 
     cy.log('check shipping is in done state');
     cy.reload();
-    cy.get('button.nfd-ecommerce-taskCompleted', {
+    cy.get('.task-status-indicator', {
       timeout: customCommandTimeout,
     })
+      .parent()
       .contains('Shipping')
       .click();
 
@@ -301,15 +310,21 @@ describe('As a wp-admin user, I want to ', function () {
     cy.get('button.nfd-ecommerce-card', { timeout: customCommandTimeout })
       .contains('Tax Info')
       .click();
-    cy.get('div.nfd-ecommerce-modal-option')
+    cy.get('div.nfd-ecommerce-modal-option', { timeout: customCommandTimeout })
       .contains("I don't charge sales tax")
       .click();
     cy.contains('Continue').click();
-    cy.get('button.nfd-ecommerce-taskCompleted', {
+    cy.wait(3000);
+    cy.reload();
+    cy.get('.task-status-indicator', {
       timeout: customCommandTimeout,
-    }).should((completedCards) => {
-      expect(completedCards).to.include.text('Tax Info');
-    });
+    })
+      .parent()
+      .find('.nfd-ecommerce-card-title')
+      .contains('Tax Info', {
+        timeout: customCommandTimeout,
+      })
+      .should('exist');
     cy.exec('npx wp-env run cli wp option delete woocommerce_calc_taxes');
     cy.exec('npx wp-env run cli wp option delete woocommerce_no_sales_tax');
     cy.reload();
@@ -324,12 +339,15 @@ describe('As a wp-admin user, I want to ', function () {
       .contains('Yes, enable tax rates and calculations')
       .click();
     cy.contains('Continue').click();
-
-    cy.get('button.nfd-ecommerce-taskCompleted', {
+    cy.wait(3000);
+    cy.reload();
+    cy.get('.task-status-indicator', {
       timeout: customCommandTimeout,
-    }).should((completedCards) => {
-      expect(completedCards).to.include.text('Tax Info');
-    });
+    })
+      .parent()
+      .should((completedCards) => {
+        expect(completedCards).to.include.text('Tax Info');
+      });
     cy.contains('Tax Info').click();
 
     cy.get('form#mainform>nav>a').should((completedCards) => {
@@ -370,15 +388,9 @@ describe('As a wp-admin user, I want to ', function () {
     });
   });
 
-  // TODO: Need to check what is expected behavior of Add a Product
   it('Add a Product from "Your product" tabs', () => {
     cy.contains('Products and Services').click();
     cy.get('button.nfd-ecommerce-card').contains('Add a Product').click();
-
-    // FIXME: This is not actual behaviour
-    cy.findByText('Physical product', {
-      timeout: customCommandTimeout,
-    }).click();
     cy.get('[name=post_title]', { timeout: customCommandTimeout }).type(
       this.data.simple_product_details.name
     );
@@ -426,10 +438,7 @@ describe('As a wp-admin user, I want to ', function () {
     cy.get('[value=Add]').click();
 
     cy.get('[name=publish]').click();
-    cy.go('back');
-    cy.go('back');
-    // FIXME: This is not actual behaviour
-    cy.go('back');
+    cy.visit(homeUrl);
     cy.contains('Products and Services', { timeout: 10000 }).click();
     cy.contains('Manage Products', { timeout: 15000 }).should('exist');
   });
@@ -601,7 +610,6 @@ describe('As a wp-admin user, I want to ', function () {
     cy.url().should('include', 'edit.php?post_type=gift_card&yith-plugin');
   });
 
-  // TODO: Execute and test when this feature implemented
   it('create , edit, and manage booking card', () => {
     cy.contains('Products and Services').click();
     cy.get('.nfd-ecommerce-card-title', { timeout: customCommandTimeout })
@@ -613,8 +621,9 @@ describe('As a wp-admin user, I want to ', function () {
     cy.get('select#product-type').select('Bookable Product');
     cy.get('input#publish').click();
     cy.visit('/wp-admin/admin.php?page=bluehost#/home/store/products');
+    cy.wait(5000);
     cy.get('.nfd-ecommerce-card-title', { timeout: customCommandTimeout })
-      .contains('Manage Bookings')
+      .contains('Manage Bookings', { timeout: customCommandTimeout })
       .click();
     cy.findByText('YITH Booking and Appointment for WooCommerce').should(
       'exist'
