@@ -16,10 +16,16 @@
 import 'cypress-axe';
 import './commands';
 
-Cypress.Cookies.defaults({
-	preserve: /wp|wordpress/,
-});
+require( '@replayio/cypress/support' );
 
-before(() => {
-	cy.login(Cypress.env('wpUsername'), Cypress.env('wpPassword'));
-});
+const resizeObserverLoopErrRe = /^[^(ResizeObserver loop limit exceeded)]/;
+Cypress.on( 'uncaught:exception', ( err ) => {
+	/* returning false here prevents Cypress from failing the test */
+	if ( resizeObserverLoopErrRe.test( err.message ) ) {
+		return false;
+	}
+} );
+
+before( () => {
+	cy.login( Cypress.env( 'wpUsername' ), Cypress.env( 'wpPassword' ) );
+} );
