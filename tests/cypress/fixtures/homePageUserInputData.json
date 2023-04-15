@@ -1,24 +1,49 @@
 {
-  "myGlobalVariable": "",
-
   "store_address": {
-    "address1": "14000 US-82",
-    "address2": "",
-    "city": "Itta Bena",
-    "state": "Mississippi",
-    "country": "United States (US)",
-    "zipcode": "38941",
-    "email": "test@newfold.com",
-    "currency": "United States (US) dollar (USD) ($)"
+    "ind": {
+      "address1": "vivek nagar colony",
+      "address2": "Nasirpur",
+      "city": "varanasi",
+      "state": "Uttar Pradesh",
+      "country": "India",
+      "zipcode": "221005",
+      "email": "test@newfold.com",
+      "currency": "Indian rupee (INR) (₹)"
+    },
+    "usa": {
+      "address1": "14000 US-82",
+      "address2": "",
+      "city": "Itta Bena",
+      "state": "Mississippi",
+      "country": "United States (US)",
+      "zipcode": "38941",
+      "email": "test@newfold.com",
+      "currency": "United States (US) dollar (USD) ($)"
+    },
+    "aus": {
+      "address1": "",
+      "address2": "",
+      "city": "",
+      "state": "New South Wales",
+      "country": "Australia",
+      "zipcode": "12345",
+      "email": "test@newfold.com",
+      "currency": "Australian dollar (AUD) ($)"
+    }
   },
-  "existing_payment": {
+  "paypal": {
     "title": "Pay with Paypal",
     "environment": "sandbox",
     "payment_action": "authorize",
     "paypal_id": "4VYQPATYH32A8"
   },
 
-  "existing_shipping": {
+  "razorpay": {
+    "secret_id": "",
+    "secret_key": ""
+  },
+
+  "shippo": {
     "environment": "sandbox",
     "test_api": "shippo_test_a3aa2d1881ddfc7cd13151137830a527ae09ab97",
     "sender_name": "jocelyn",
