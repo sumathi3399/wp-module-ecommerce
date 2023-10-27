@@ -15,7 +15,7 @@ const Text = {
       ? __("Congrats on your new store!", "wp-module-ecommerce")
       : __("Congrats on your new site!", "wp-module-ecommerce"),
     description: __(
-      "Your site is currently displaying a \"Coming Soon\" page.",
+      'Your site is currently displaying a "Coming Soon" page.',
       "wp-module-ecommerce"
     ),
     Illustration: ComingSoonIllustration,
@@ -130,9 +130,7 @@ export function OnboardingScreen({
                     as="a"
                     className="nfd-bg-canvas"
                     href={
-                      NewfoldRuntime.hasCapability("isEcommerce")
-                        ? `${NewfoldRuntime.siteDetails.url}/shop`
-                        : NewfoldRuntime.siteDetails.url
+                      NewfoldRuntime.siteDetails.url
                     }
                     target="_blank"
                     variant="secondary"
